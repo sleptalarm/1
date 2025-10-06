@@ -947,8 +947,11 @@
                     <a href="/" class="nav-link active">📈 投资组合</a>
                     <a href="transactions.html" class="nav-link">📋 交易记录</a>
                 </div>
-                <div class="last-update">
-                    最后更新: <span id="lastUpdate">-</span>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div class="last-update">
+                        最后更新: <span id="lastUpdate">-</span>
+                    </div>
+                    <button onclick="resetAllData()" style="background: #dc2626; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">🔄 重置所有数据</button>
                 </div>
             </div>
         </div>
@@ -996,7 +999,6 @@
                 <div class="button-group">
                     <button onclick="depositCash()">💵 转入资金</button>
                     <button onclick="withdrawCash()">💸 转出资金</button>
-                    <button onclick="resetAllData()" style="background: #dc2626; margin-left: 20px;">🔄 重置所有数据</button>
                 </div>
                 <div style="margin-top: 20px; color: white; font-size: 0.9em;">
                     <p>💡 当前现金余额: $<span id="currentCashDisplay">0.00</span></p>
@@ -1425,7 +1427,7 @@
                 portfolio = [];
                 transactionHistory = [];
                 totalRealizedProfit = 0;
-                cashBalance = 100000; // Reset to default
+                cashBalance = 0; // Reset to 0
 
                 // Clear localStorage
                 localStorage.clear();

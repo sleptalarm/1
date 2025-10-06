@@ -413,8 +413,8 @@
             }
 
             const portfolioData = {
-                portfolio: JSON.parse(localStorage.getItem('portfolio') || '[]'),
-                cashBalance: parseFloat(localStorage.getItem('cashBalance') || '100000'),
+                positions: JSON.parse(localStorage.getItem('portfolio') || '[]'),
+                cashBalance: parseFloat(localStorage.getItem('cashBalance') || '0'),
                 transactionHistory: transactionHistory,
                 totalRealizedProfit: transactionHistory
                     .filter(t => t.type === 'sell')
