@@ -1311,10 +1311,18 @@
 
         function savePortfolio() {
             localStorage.setItem('portfolio', JSON.stringify(portfolio));
+            // 触发云端同步
+            if (typeof syncToCloud === 'function') {
+                syncToCloud().catch(err => console.error('云端同步失败:', err));
+            }
         }
 
         function saveCashBalance() {
             localStorage.setItem('cashBalance', cashBalance.toString());
+            // 触发云端同步
+            if (typeof syncToCloud === 'function') {
+                syncToCloud().catch(err => console.error('云端同步失败:', err));
+            }
         }
 
         // Cash management functions
@@ -1407,6 +1415,11 @@
 
             // Also save to IndexedDB for better persistence
             saveToIndexedDB();
+
+            // 触发云端同步
+            if (typeof syncToCloud === 'function') {
+                syncToCloud().catch(err => console.error('云端同步失败:', err));
+            }
         }
 
         // Save to IndexedDB for better persistence
