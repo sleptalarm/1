@@ -871,17 +871,29 @@
 
                     let calculatedShares = 0;
                     let totalCost = 0;
+                    let avgCost = 0;
 
                     allTransactions.forEach(t => {
                         if (t.type === 'buy') {
-                            totalCost += t.shares * t.price + (t.totalFee || 0);
+                            // When buying, add to total cost and shares
+                            const buyCost = t.shares * t.price + (t.totalFee || 0);
+                            totalCost += buyCost;
                             calculatedShares += t.shares;
+                            avgCost = totalCost / calculatedShares;  // Recalculate average
                         } else if (t.type === 'sell') {
+                            // When selling, reduce shares but keep the same average cost
+                            // The total cost for remaining shares = avgCost * remaining shares
                             calculatedShares -= t.shares;
+                            if (calculatedShares > 0) {
+                                totalCost = avgCost * calculatedShares;
+                            } else {
+                                totalCost = 0;
+                                avgCost = 0;
+                            }
                         }
                     });
 
-                    const avgBuyPrice = calculatedShares > 0 ? totalCost / calculatedShares : transaction.price;
+                    const avgBuyPrice = calculatedShares > 0 ? avgCost : transaction.price;
 
                     if (!stock) {
                         // Stock was cleared, re-add it with calculated shares
