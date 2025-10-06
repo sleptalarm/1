@@ -62,13 +62,10 @@ def kv_delete(key):
 class handler(BaseHTTPRequestHandler):
 
     def get_user_id(self):
-        """获取用户ID（基于IP的哈希）"""
-        client_ip = self.headers.get('X-Forwarded-For', '').split(',')[0].strip()
-        if not client_ip:
-            client_ip = self.headers.get('X-Real-IP', 'unknown')
-        user_agent = self.headers.get('User-Agent', '')
-        user_string = f"{client_ip}_{user_agent}"
-        return hashlib.md5(user_string.encode()).hexdigest()
+        """获取用户ID（使用固定ID以支持多设备同步）"""
+        # 使用固定用户ID，所有设备共享同一份数据
+        # 如需多用户支持，可以添加登录系统
+        return "default_user"
 
     def do_GET(self):
         """处理GET请求 - 加载投资组合"""
