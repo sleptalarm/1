@@ -23,9 +23,11 @@ class handler(BaseHTTPRequestHandler):
         else:
             mongodb_status = mongodb_uri
 
-        # 检查Vercel KV环境变量
+        # 检查所有可能的KV/Redis环境变量
         kv_url = os.environ.get('KV_REST_API_URL', 'NOT_SET')
         kv_token = os.environ.get('KV_REST_API_TOKEN', 'NOT_SET')
+        kv_url_alt = os.environ.get('KV_URL', 'NOT_SET')
+        redis_url = os.environ.get('REDIS_URL', 'NOT_SET')
 
         debug_info = {
             'status': 'ok',
@@ -35,7 +37,10 @@ class handler(BaseHTTPRequestHandler):
                 'MONGODB_URI_LENGTH': len(mongodb_uri) if mongodb_uri != 'NOT_SET' else 0,
                 'KV_REST_API_URL_SET': kv_url != 'NOT_SET',
                 'KV_REST_API_TOKEN_SET': kv_token != 'NOT_SET',
-                'KV_URL_PREVIEW': kv_url[:50] + '...' if kv_url != 'NOT_SET' and len(kv_url) > 50 else kv_url
+                'KV_URL_SET': kv_url_alt != 'NOT_SET',
+                'REDIS_URL_SET': redis_url != 'NOT_SET',
+                'KV_URL_PREVIEW': kv_url[:50] + '...' if kv_url != 'NOT_SET' and len(kv_url) > 50 else kv_url,
+                'REDIS_URL_PREVIEW': redis_url[:50] + '...' if redis_url != 'NOT_SET' and len(redis_url) > 50 else redis_url
             },
             'vercel': {
                 'region': os.environ.get('VERCEL_REGION', 'unknown'),
