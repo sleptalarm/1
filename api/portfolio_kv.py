@@ -1,7 +1,7 @@
 """
 Vercel Serverless Function - 投资组合数据管理
-使用Vercel KV (Redis) 存储数据，通过REST API访问
-完美兼容Vercel，无SSL问题，无需额外依赖
+使用Redis存储数据
+完美兼容Vercel，无SSL问题
 """
 
 from http.server import BaseHTTPRequestHandler
@@ -9,61 +9,55 @@ import json
 import os
 from datetime import datetime
 import hashlib
-import urllib.request
-import urllib.error
 
-# Vercel自动注入的KV环境变量
-KV_REST_API_URL = os.environ.get('KV_REST_API_URL', '')
-KV_REST_API_TOKEN = os.environ.get('KV_REST_API_TOKEN', '')
+# 尝试导入redis库
+try:
+    import redis
+    REDIS_URL = os.environ.get('REDIS_URL', '')
+    if REDIS_URL:
+        redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+        REDIS_AVAILABLE = True
+    else:
+        REDIS_AVAILABLE = False
+except Exception as e:
+    REDIS_AVAILABLE = False
+    redis_client = None
 
 def kv_get(key):
-    """从Vercel KV获取数据"""
-    if not KV_REST_API_URL or not KV_REST_API_TOKEN:
+    """从Redis获取数据"""
+    if not REDIS_AVAILABLE:
         return None
 
-    url = f"{KV_REST_API_URL}/get/{key}"
-    headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
-
-    req = urllib.request.Request(url, headers=headers)
     try:
-        with urllib.request.urlopen(req) as response:
-            result = response.read().decode('utf-8')
-            if result == 'null' or not result:
-                return None
-            data = json.loads(result)
-            return data.get('result')
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return None
-        raise
+        data = redis_client.get(key)
+        if data:
+            return json.loads(data)
+        return None
+    except Exception as e:
+        print(f"Redis GET error: {e}")
+        return None
 
 def kv_set(key, value):
-    """保存数据到Vercel KV"""
-    if not KV_REST_API_URL or not KV_REST_API_TOKEN:
-        raise Exception("KV环境变量未配置")
+    """保存数据到Redis"""
+    if not REDIS_AVAILABLE:
+        raise Exception("Redis未配置")
 
-    url = f"{KV_REST_API_URL}/set/{key}"
-    data = json.dumps(value).encode('utf-8')
-    headers = {
-        'Authorization': f'Bearer {KV_REST_API_TOKEN}',
-        'Content-Type': 'application/json'
-    }
-
-    req = urllib.request.Request(url, data=data, headers=headers)
-    with urllib.request.urlopen(req) as response:
-        return response.read().decode('utf-8')
+    try:
+        redis_client.set(key, json.dumps(value))
+        return True
+    except Exception as e:
+        raise Exception(f"Redis SET error: {e}")
 
 def kv_delete(key):
-    """从Vercel KV删除数据"""
-    if not KV_REST_API_URL or not KV_REST_API_TOKEN:
-        raise Exception("KV环境变量未配置")
+    """从Redis删除数据"""
+    if not REDIS_AVAILABLE:
+        raise Exception("Redis未配置")
 
-    url = f"{KV_REST_API_URL}/del/{key}"
-    headers = {'Authorization': f'Bearer {KV_REST_API_TOKEN}'}
-
-    req = urllib.request.Request(url, headers=headers, method='DELETE')
-    with urllib.request.urlopen(req) as response:
-        return response.read().decode('utf-8')
+    try:
+        redis_client.delete(key)
+        return True
+    except Exception as e:
+        raise Exception(f"Redis DELETE error: {e}")
 
 class handler(BaseHTTPRequestHandler):
 
