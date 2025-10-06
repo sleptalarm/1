@@ -400,6 +400,48 @@
                 font-size: 0.65em;
             }
 
+            /* 交易记录表格卡片布局 */
+            .transactions-table {
+                display: block;
+                overflow: visible;
+            }
+
+            .transactions-table thead {
+                display: none;
+            }
+
+            .transactions-table tbody {
+                display: block;
+            }
+
+            .transactions-table tr {
+                display: block;
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 10px;
+                background: #fff;
+            }
+
+            .dark .transactions-table tr {
+                background: #1e1e1e;
+                border-color: #333;
+            }
+
+            .transactions-table td {
+                display: flex;
+                justify-content: space-between;
+                padding: 6px 0;
+                border: none;
+                text-align: left;
+            }
+
+            .transactions-table td:before {
+                content: attr(data-label);
+                font-weight: bold;
+                margin-right: 10px;
+            }
+
             .nav-link {
                 padding: 5px 10px;
                 font-size: 0.85em;
@@ -806,16 +848,16 @@
 
                 return `
                     <tr>
-                        <td>${date}</td>
-                        <td><strong>${stockSymbol}</strong></td>
-                        <td><span class="transaction-type ${typeClass}">${typeText}</span></td>
-                        <td>${shares}</td>
-                        <td>${price}</td>
-                        <td>${feeDisplay}</td>
-                        <td>${totalValue}</td>
-                        <td class="${profitClass}">${profitDisplay}</td>
-                        <td>${transaction.note || '-'}</td>
-                        <td>
+                        <td data-label="日期">${date}</td>
+                        <td data-label="股票"><strong>${stockSymbol}</strong></td>
+                        <td data-label="类型"><span class="transaction-type ${typeClass}">${typeText}</span></td>
+                        <td data-label="数量">${shares}</td>
+                        <td data-label="价格">${price}</td>
+                        <td data-label="手续费">${feeDisplay}</td>
+                        <td data-label="总额">${totalValue}</td>
+                        <td data-label="盈亏" class="${profitClass}">${profitDisplay}</td>
+                        <td data-label="备注">${transaction.note || '-'}</td>
+                        <td data-label="操作">
                             <button class="delete-btn" onclick="deleteTransaction(${transaction.id})" title="删除记录">
                                 🗑️ 删除
                             </button>

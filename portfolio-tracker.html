@@ -871,10 +871,15 @@
             }
 
             /* Reset button on mobile */
+            .header-nav > div:last-child {
+                display: flex;
+                justify-content: center;
+            }
+
             button[onclick="resetAllData()"] {
-                width: 100%;
+                width: auto;
                 margin-top: 10px;
-                padding: 10px !important;
+                padding: 10px 20px !important;
             }
 
             .summary-cards {
@@ -955,7 +960,10 @@
             }
 
             canvas {
-                max-height: 250px;
+                max-height: 200px;
+                aspect-ratio: 2 / 1;
+                width: 100% !important;
+                height: auto !important;
             }
 
             /* Stock cards */
@@ -1000,6 +1008,48 @@
 
             table {
                 font-size: 0.7em;
+            }
+
+            /* 持仓明细表格卡片布局 */
+            .positions-section table {
+                display: block;
+                overflow: visible;
+            }
+
+            .positions-section thead {
+                display: none;
+            }
+
+            .positions-section tbody {
+                display: block;
+            }
+
+            .positions-section tr {
+                display: block;
+                margin-bottom: 15px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 10px;
+                background: #fff;
+            }
+
+            .dark .positions-section tr {
+                background: #1e1e1e;
+                border-color: #333;
+            }
+
+            .positions-section td {
+                display: flex;
+                justify-content: space-between;
+                padding: 6px 0;
+                border: none;
+                text-align: left;
+            }
+
+            .positions-section td:before {
+                content: attr(data-label);
+                font-weight: bold;
+                margin-right: 10px;
             }
 
             button {
@@ -1222,7 +1272,7 @@
             </div>
         </div>
 
-        <div class="portfolio-table">
+        <div class="portfolio-table positions-section">
             <div class="table-header">
                 <h2>📋 我的持仓明细</h2>
                 <div class="table-actions">
@@ -3064,18 +3114,18 @@
 
                 return `
                     <tr>
-                        <td><span class="stock-symbol">${stock.symbol}</span></td>
-                        <td>${stock.companyName}</td>
-                        <td>${stock.shares.toFixed(2)}</td>
-                        <td>${stock.buyPrice.toFixed(2)}</td>
-                        <td>${stock.currentPrice.toFixed(2)}</td>
-                        <td>${investment.toFixed(2)}</td>
-                        <td>${currentValue.toFixed(2)}</td>
-                        <td class="${returnClass}">${returnSymbol} ${Math.abs(returnDollar).toFixed(2)}</td>
-                        <td class="${returnClass}">${returnSymbol} ${Math.abs(returnPercent)}%</td>
-                        <td><strong>${weight}%</strong></td>
-                        <td>${holdingDays} 天</td>
-                        <td>
+                        <td data-label="股票代码"><span class="stock-symbol">${stock.symbol}</span></td>
+                        <td data-label="公司名称">${stock.companyName}</td>
+                        <td data-label="持股数">${stock.shares.toFixed(2)}</td>
+                        <td data-label="买入价">${stock.buyPrice.toFixed(2)}</td>
+                        <td data-label="当前价">${stock.currentPrice.toFixed(2)}</td>
+                        <td data-label="成本">${investment.toFixed(2)}</td>
+                        <td data-label="市值">${currentValue.toFixed(2)}</td>
+                        <td data-label="盈亏($)" class="${returnClass}">${returnSymbol} ${Math.abs(returnDollar).toFixed(2)}</td>
+                        <td data-label="盈亏(%)" class="${returnClass}">${returnSymbol} ${Math.abs(returnPercent)}%</td>
+                        <td data-label="仓位占比"><strong>${weight}%</strong></td>
+                        <td data-label="持有天数">${holdingDays} 天</td>
+                        <td data-label="操作">
                             <div class="action-buttons">
                                 <button class="buy-more-btn" onclick="buyMoreStock(${stock.id})" title="加仓">📈 加仓</button>
                                 <button class="sell-part-btn" onclick="sellPartStock(${stock.id})" title="减仓">📉 减仓</button>
