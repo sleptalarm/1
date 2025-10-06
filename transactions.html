@@ -272,20 +272,142 @@
 
         @media (max-width: 768px) {
             .container {
-                padding: 20px;
+                padding: 10px;
             }
 
-            .transactions-table {
-                font-size: 0.85em;
+            .header {
+                padding: 15px;
+                margin-bottom: 15px;
             }
 
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .header-nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .nav-links {
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .nav-link {
+                padding: 6px 12px;
+                font-size: 0.9em;
+            }
+
+            .summary-section {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .summary-card {
+                padding: 15px;
+            }
+
+            .summary-card h3 {
+                font-size: 0.9em;
+            }
+
+            .summary-card .value {
+                font-size: 1.3em;
+            }
+
+            /* Filters */
             .filters {
                 flex-direction: column;
                 gap: 10px;
             }
 
-            .summary-cards {
-                grid-template-columns: 1fr;
+            .filter-group {
+                width: 100%;
+            }
+
+            .filter-group label {
+                font-size: 0.9em;
+            }
+
+            .filter-group select,
+            .filter-group input {
+                font-size: 16px; /* Prevents iOS zoom */
+                padding: 10px;
+            }
+
+            /* Table */
+            .transactions-table {
+                font-size: 0.7em;
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                min-width: 100%;
+            }
+
+            th, td {
+                padding: 8px 4px;
+            }
+
+            /* Hide less important columns on mobile */
+            .hide-mobile {
+                display: none;
+            }
+
+            .delete-btn {
+                padding: 4px 8px;
+                font-size: 0.8em;
+            }
+
+            /* Empty state */
+            .empty-state {
+                padding: 30px 15px;
+            }
+
+            .empty-state h3 {
+                font-size: 1.2em;
+            }
+
+            .empty-state p {
+                font-size: 0.9em;
+            }
+        }
+
+        /* Extra small devices (iPhone SE, etc.) */
+        @media (max-width: 375px) {
+            .container {
+                padding: 5px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+
+            .summary-card .value {
+                font-size: 1.1em;
+            }
+
+            .transactions-table {
+                font-size: 0.65em;
+            }
+
+            .nav-link {
+                padding: 5px 10px;
+                font-size: 0.85em;
+            }
+
+            .delete-btn {
+                padding: 3px 6px;
+                font-size: 0.75em;
             }
         }
     </style>

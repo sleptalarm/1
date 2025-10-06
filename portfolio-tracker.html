@@ -837,27 +837,179 @@
 
         @media (max-width: 768px) {
             .container {
-                padding: 20px;
+                padding: 10px;
             }
-            
+
+            .header {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .header-nav {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+
+            .header-nav > div {
+                width: 100%;
+            }
+
+            .nav-links {
+                flex-direction: row;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .nav-link {
+                padding: 6px 12px;
+                font-size: 0.9em;
+            }
+
+            /* Reset button on mobile */
+            button[onclick="resetAllData()"] {
+                width: 100%;
+                margin-top: 10px;
+                padding: 10px !important;
+            }
+
             .summary-cards {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr;
+                gap: 10px;
             }
-            
+
+            .summary-card {
+                padding: 15px;
+            }
+
+            .summary-card h3 {
+                font-size: 0.9em;
+            }
+
+            .summary-card .value {
+                font-size: 1.3em;
+            }
+
+            /* Mobile-friendly table */
             table {
-                font-size: 0.85em;
+                font-size: 0.75em;
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
             }
-            
+
             th, td {
-                padding: 10px 8px;
+                padding: 8px 4px;
+            }
+
+            /* Hide less important columns on mobile */
+            .hide-mobile {
+                display: none;
             }
 
             .button-group {
                 grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            button {
+                padding: 12px;
+                font-size: 0.9em;
             }
 
             .table-actions {
                 flex-direction: column;
+                gap: 8px;
+            }
+
+            /* Input sections */
+            .input-section {
+                padding: 15px;
+            }
+
+            .input-section h2 {
+                font-size: 1.2em;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            input, select {
+                font-size: 16px; /* Prevents iOS zoom on focus */
+            }
+
+            /* Chart sections */
+            .chart-section {
+                padding: 15px;
+            }
+
+            .chart-section h2 {
+                font-size: 1.1em;
+            }
+
+            canvas {
+                max-height: 250px;
+            }
+
+            /* Stock cards */
+            .stock-card {
+                padding: 12px;
+            }
+
+            .stock-header h3 {
+                font-size: 1em;
+            }
+
+            .stock-price {
+                font-size: 1.2em;
+            }
+
+            /* Time selector */
+            .time-selector {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .time-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+                min-width: 32px;
+            }
+        }
+
+        /* Extra small devices (iPhone SE, etc.) */
+        @media (max-width: 375px) {
+            .container {
+                padding: 5px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+
+            .summary-card .value {
+                font-size: 1.1em;
+            }
+
+            table {
+                font-size: 0.7em;
+            }
+
+            button {
+                padding: 10px;
+                font-size: 0.85em;
+            }
+
+            .nav-link {
+                padding: 5px 10px;
+                font-size: 0.85em;
             }
         }
 
