@@ -65,10 +65,18 @@ class handler(BaseHTTPRequestHandler):
         if mongodb_uri != 'NOT_SET':
             try:
                 from pymongo import MongoClient
-                client = MongoClient(mongodb_uri, serverSelectionTimeoutMS=5000)
+                # Vercel兼容的连接配置
+                client = MongoClient(
+                    mongodb_uri,
+                    serverSelectionTimeoutMS=5000,
+                    tlsAllowInvalidCertificates=True,  # 允许自签名证书
+                    retryWrites=True,
+                    w='majority'
+                )
                 # 尝试连接
                 client.admin.command('ping')
                 debug_info['mongodb_connection'] = 'SUCCESS'
+                debug_info['mongodb_ping'] = 'OK'
                 client.close()
             except Exception as e:
                 debug_info['mongodb_connection'] = f'FAILED: {str(e)}'

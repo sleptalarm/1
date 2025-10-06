@@ -25,7 +25,14 @@ class handler(BaseHTTPRequestHandler):
             mongodb_uri = os.environ.get('MONGODB_URI', '')
             if mongodb_uri:
                 try:
-                    self.client = MongoClient(mongodb_uri, serverSelectionTimeoutMS=5000)
+                    # Vercel兼容的MongoDB连接配置
+                    self.client = MongoClient(
+                        mongodb_uri,
+                        serverSelectionTimeoutMS=5000,
+                        tlsAllowInvalidCertificates=True,  # 允许自签名证书
+                        retryWrites=True,
+                        w='majority'
+                    )
                     self.db = self.client.portfolio_tracker
                     self.collection = self.db.portfolios
                 except Exception as e:
