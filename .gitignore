@@ -15,6 +15,7 @@ __pycache__/
 venv/
 env/
 ENV/
+node_modules/
 
 # IDE
 .vscode/
@@ -35,6 +36,7 @@ Thumbs.db
 # 测试文件
 test_*.py
 *_test.py
+test-mongodb.js
 
 # 旧配置（不需要部署的文件）
 app.yaml
@@ -47,3 +49,11 @@ netlify.toml
 *.tmp
 *.bak
 cloud/
+
+#说明
+Vercel部署指南.md
+修复说明.md
+开始部署.md
+部署检查清单.md
+项目文件说明.md
+检查环境变量.md

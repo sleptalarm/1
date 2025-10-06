@@ -33,17 +33,17 @@
     },
     {
       "src": "/api/portfolio/save",
-      "dest": "/api/portfolio.py",
+      "dest": "/api/portfolio_kv.py",
       "methods": ["POST", "OPTIONS"]
     },
     {
       "src": "/api/portfolio/load",
-      "dest": "/api/portfolio.py",
+      "dest": "/api/portfolio_kv.py",
       "methods": ["GET", "OPTIONS"]
     },
     {
       "src": "/api/portfolio/delete",
-      "dest": "/api/portfolio.py",
+      "dest": "/api/portfolio_kv.py",
       "methods": ["DELETE", "OPTIONS"]
     },
     {
