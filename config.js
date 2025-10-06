@@ -12,8 +12,8 @@ const CONFIG = {
     // 是否启用云端同步
     ENABLE_CLOUD_SYNC: true,
 
-    // 数据库类型：'firestore', 'mongodb', 'localstorage'
-    DATABASE_TYPE: 'mongodb',  // 使用MongoDB云端存储
+    // 数据库类型：'kv', 'localstorage'
+    DATABASE_TYPE: 'kv',  // 使用Vercel KV云端存储
 };
 
 // 导出配置
