@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交易记录 - 股票投资组合追踪器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a202c;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+            position: relative;
+            background: #ffffff;
+            color: #1a202c;
+            padding: 24px;
+            border-radius: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .header-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-link {
+            color: #4a5568;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: #f7fafc;
+            color: #2d3748;
+        }
+
+        .nav-link.active {
+            background: #2b6cb0;
+            color: white;
+            font-weight: 600;
+        }
+
+        h1 {
+            color: #1f2937;
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .summary-section {
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .summary-card {
+            background: #ffffff;
+            color: #1a202c;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .summary-card h3 {
+            font-size: 0.95em;
+            margin-bottom: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .summary-card p {
+            font-size: 2em;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        .summary-card.profit p {
+            color: #10b981;
+        }
+
+        .summary-card.loss p {
+            color: #ef4444;
+        }
+
+        .transactions-section {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+        }
+
+        .section-header {
+            padding: 25px;
+            background: #1e3c72;
+            color: white;
+        }
+
+        .section-header h2 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .filter-group select, .filter-group input {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .filter-group select option {
+            background: #333;
+            color: white;
+        }
+
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .transactions-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .transactions-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .transactions-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .transaction-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .transaction-type.buy {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .transaction-type.sell {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .transaction-type.cash-deposit {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .transaction-type.cash-withdrawal {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .profit-positive {
+            color: #28a745;
+            font-weight: 600;
+        }
+
+        .profit-negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background-color 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .transactions-table {
+                font-size: 0.85em;
+            }
+
+            .filters {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 交易记录管理</h1>
+            <div class="header-nav">
+                <div class="nav-links">
+                    <a href="portfolio-tracker.html" class="nav-link">📈 投资组合</a>
+                    <a href="transactions.html" class="nav-link active">📋 交易记录</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-section">
+            <h2 style="margin-bottom: 20px; color: #495057;">📊 交易汇总</h2>
+            <div class="summary-cards">
+                <div class="summary-card" id="realizedProfitCard">
+                    <h3>💰 总实现盈亏</h3>
+                    <p id="totalRealizedProfit">$0.00</p>
+                </div>
+                <div class="summary-card">
+                    <h3>🔢 交易次数</h3>
+                    <p id="transactionCount">0</p>
+                </div>
+                <div class="summary-card">
+                    <h3>💸 总手续费</h3>
+                    <p id="totalFees">$0.00</p>
+                </div>
+                <div class="summary-card">
+                    <h3>🏆 胜率统计</h3>
+                    <p id="winRateStats">0.00%</p>
+                </div>
+                <div class="summary-card profit">
+                    <h3>📈 最大单笔盈利</h3>
+                    <p id="maxProfit">$0.00</p>
+                </div>
+                <div class="summary-card loss">
+                    <h3>📉 最大单笔亏损</h3>
+                    <p id="maxLoss">$0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="transactions-section">
+            <div class="section-header">
+                <h2>交易记录详情</h2>
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>股票代码:</label>
+                        <select id="symbolFilter">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>交易类型:</label>
+                        <select id="typeFilter">
+                            <option value="">全部</option>
+                            <option value="buy">买入</option>
+                            <option value="sell">卖出</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>起始日期:</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    <div class="filter-group">
+                        <label>结束日期:</label>
+                        <input type="date" id="endDate">
+                    </div>
+                </div>
+            </div>
+
+            <table class="transactions-table" id="transactionsTable">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>股票代码</th>
+                        <th>类型</th>
+                        <th>股数</th>
+                        <th>价格</th>
+                        <th>手续费</th>
+                        <th>总金额</th>
+                        <th>实现盈亏</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsBody">
+                    <tr class="empty-state">
+                        <td colspan="10">
+                            <h3>📭 暂无交易记录</h3>
+                            <p>开始交易后，所有记录将在这里显示</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let transactionHistory = [];
+        let filteredTransactions = [];
+
+        // Load data on page load
+        window.onload = async function() {
+            await loadTransactionHistory();
+            updateDisplay();
+            setupFilters();
+        };
+
+        // Load transaction history from browser cache
+        async function loadTransactionHistory() {
+            // First try to load from IndexedDB
+            const indexedData = await loadFromIndexedDB();
+            if (indexedData && indexedData.transactions) {
+                transactionHistory = indexedData.transactions;
+                console.log('Loaded transactions from IndexedDB:', indexedData);
+                return;
+            }
+
+            // Fallback to localStorage
+            const saved = localStorage.getItem('transactionHistory');
+            if (saved) {
+                transactionHistory = JSON.parse(saved);
+
+                // If we have localStorage data, save it to IndexedDB for future use
+                if (transactionHistory.length > 0) {
+                    saveToIndexedDB();
+                }
+            }
+        }
+
+        // Save transaction history to browser cache
+        function saveTransactionHistory() {
+            localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory));
+            saveToIndexedDB();
+        }
+
+        // Save to IndexedDB for better persistence
+        async function saveToIndexedDB() {
+            const data = {
+                transactions: transactionHistory,
+                totalRealizedProfit: transactionHistory
+                    .filter(t => t.type === 'sell')
+                    .reduce((sum, t) => sum + (t.realizedProfit || 0), 0),
+                lastUpdated: new Date().toISOString()
+            };
+
+            try {
+                const request = indexedDB.open('PortfolioTracker', 1);
+                request.onupgradeneeded = function(event) {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('transactions')) {
+                        db.createObjectStore('transactions', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('data')) {
+                        db.createObjectStore('data');
+                    }
+                };
+                request.onsuccess = function(event) {
+                    const db = event.target.result;
+                    const transaction = db.transaction(['data'], 'readwrite');
+                    const store = transaction.objectStore('data');
+                    store.put(data, 'transactionData');
+                };
+            } catch (error) {
+                console.error('Error saving to IndexedDB:', error);
+            }
+        }
+
+        // Load from IndexedDB
+        async function loadFromIndexedDB() {
+            return new Promise((resolve) => {
+                try {
+                    const request = indexedDB.open('PortfolioTracker', 1);
+                    request.onsuccess = function(event) {
+                        const db = event.target.result;
+                        if (db.objectStoreNames.contains('data')) {
+                            const transaction = db.transaction(['data'], 'readonly');
+                            const store = transaction.objectStore('data');
+                            const getRequest = store.get('transactionData');
+                            getRequest.onsuccess = function() {
+                                resolve(getRequest.result || null);
+                            };
+                            getRequest.onerror = function() {
+                                resolve(null);
+                            };
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    request.onerror = function() {
+                        resolve(null);
+                    };
+                } catch (error) {
+                    resolve(null);
+                }
+            });
+        }
+
+        // Update the display
+        function updateDisplay() {
+            updateSummary();
+            updateTransactionsTable();
+            updateFilters();
+        }
+
+        // Update summary cards
+        function updateSummary() {
+            let totalRealizedProfit = 0;
+            let totalFees = 0;
+            let stockTransactionCount = 0;
+
+            transactionHistory.forEach(transaction => {
+                totalFees += transaction.totalFee || 0;
+                if (transaction.type === 'sell') {
+                    totalRealizedProfit += transaction.realizedProfit || 0;
+                }
+                // Count only stock transactions (buy/sell), exclude cash deposits/withdrawals
+                if (transaction.type === 'buy' || transaction.type === 'sell') {
+                    stockTransactionCount++;
+                }
+            });
+
+            document.getElementById('totalRealizedProfit').textContent = `${totalRealizedProfit >= 0 ? '↑' : '↓'} $${Math.abs(totalRealizedProfit).toFixed(2)}`;
+            document.getElementById('transactionCount').textContent = stockTransactionCount.toString();
+            document.getElementById('totalFees').textContent = `$${totalFees.toFixed(2)}`;
+
+            // Update profit card styling
+            const profitCard = document.getElementById('realizedProfitCard');
+            if (totalRealizedProfit >= 0) {
+                profitCard.classList.add('profit');
+                profitCard.classList.remove('loss');
+            } else {
+                profitCard.classList.add('loss');
+                profitCard.classList.remove('profit');
+            }
+
+            // Calculate and update advanced metrics
+            updateAdvancedMetrics();
+        }
+
+        // Calculate advanced transaction metrics
+        function updateAdvancedMetrics() {
+            const sellTransactions = transactionHistory.filter(t => t.type === 'sell');
+
+            // Calculate win rate statistics
+            const winRateStats = calculateWinRateStats(sellTransactions);
+
+            // Calculate max profit and loss
+            const { maxProfit, maxLoss } = calculateMaxProfitLoss(sellTransactions);
+
+            // Update UI elements
+            document.getElementById('winRateStats').textContent = `${winRateStats.toFixed(1)}%`;
+            document.getElementById('maxProfit').textContent = `$${maxProfit.toFixed(2)}`;
+            document.getElementById('maxLoss').textContent = `$${Math.abs(maxLoss).toFixed(2)}`;
+        }
+
+        // Calculate win rate statistics
+        function calculateWinRateStats(sellTransactions) {
+            if (sellTransactions.length === 0) return 0;
+
+            const profitableTrades = sellTransactions.filter(t => (t.realizedProfit || 0) > 0);
+            return (profitableTrades.length / sellTransactions.length) * 100;
+        }
+
+        // Calculate maximum profit and loss
+        function calculateMaxProfitLoss(sellTransactions) {
+            if (sellTransactions.length === 0) {
+                return { maxProfit: 0, maxLoss: 0 };
+            }
+
+            const profits = sellTransactions.map(t => t.realizedProfit || 0);
+            return {
+                maxProfit: Math.max(...profits, 0),
+                maxLoss: Math.min(...profits, 0)
+            };
+        }
+
+        // Update transactions table
+        function updateTransactionsTable() {
+            const tbody = document.getElementById('transactionsBody');
+            const transactions = getFilteredTransactions();
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="empty-state">
+                        <td colspan="9">
+                            <h3>📭 暂无交易记录</h3>
+                            <p>开始交易后，所有记录将在这里显示</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = transactions.map(transaction => {
+                const date = new Date(transaction.date).toLocaleDateString('zh-CN');
+
+                // Handle different transaction types
+                let typeClass, typeText, stockSymbol, shares, price, totalValue;
+
+                if (transaction.type === 'buy') {
+                    typeClass = 'buy';
+                    typeText = '买入';
+                    stockSymbol = transaction.stockSymbol;
+                    shares = transaction.shares.toFixed(2);
+                    price = `$${transaction.price.toFixed(2)}`;
+                    totalValue = `$${transaction.totalValue.toFixed(2)}`;
+                } else if (transaction.type === 'sell') {
+                    typeClass = 'sell';
+                    typeText = '卖出';
+                    stockSymbol = transaction.stockSymbol;
+                    shares = transaction.shares.toFixed(2);
+                    price = `$${transaction.price.toFixed(2)}`;
+                    totalValue = `$${transaction.totalValue.toFixed(2)}`;
+                } else if (transaction.type === 'cash_deposit') {
+                    typeClass = 'cash-deposit';
+                    typeText = '现金转入';
+                    stockSymbol = '现金';
+                    shares = '-';
+                    price = '-';
+                    totalValue = `$${transaction.amount.toFixed(2)}`;
+                } else if (transaction.type === 'cash_withdrawal') {
+                    typeClass = 'cash-withdrawal';
+                    typeText = '现金转出';
+                    stockSymbol = '现金';
+                    shares = '-';
+                    price = '-';
+                    totalValue = `$${Math.abs(transaction.amount).toFixed(2)}`;
+                }
+
+                let profitDisplay = '';
+                let profitClass = '';
+                if (transaction.realizedProfit !== undefined && transaction.type === 'sell') {
+                    profitClass = transaction.realizedProfit >= 0 ? 'profit-positive' : 'profit-negative';
+                    profitDisplay = `${transaction.realizedProfit >= 0 ? '+' : ''}$${transaction.realizedProfit.toFixed(2)}`;
+                } else {
+                    profitDisplay = '-';
+                }
+
+                // Display fee information
+                const feeDisplay = transaction.totalFee ? `$${transaction.totalFee.toFixed(3)}` : '-';
+
+                return `
+                    <tr>
+                        <td>${date}</td>
+                        <td><strong>${stockSymbol}</strong></td>
+                        <td><span class="transaction-type ${typeClass}">${typeText}</span></td>
+                        <td>${shares}</td>
+                        <td>${price}</td>
+                        <td>${feeDisplay}</td>
+                        <td>${totalValue}</td>
+                        <td class="${profitClass}">${profitDisplay}</td>
+                        <td>${transaction.note || '-'}</td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteTransaction(${transaction.id})" title="删除记录">
+                                🗑️ 删除
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Get filtered transactions
+        function getFilteredTransactions() {
+            let filtered = [...transactionHistory];
+
+            const symbolFilter = document.getElementById('symbolFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (symbolFilter) {
+                filtered = filtered.filter(t => t.stockSymbol === symbolFilter);
+            }
+
+            if (typeFilter) {
+                filtered = filtered.filter(t => t.type === typeFilter);
+            }
+
+            if (startDate) {
+                filtered = filtered.filter(t => new Date(t.date) >= new Date(startDate));
+            }
+
+            if (endDate) {
+                filtered = filtered.filter(t => new Date(t.date) <= new Date(endDate + 'T23:59:59'));
+            }
+
+            // Sort by date (newest first)
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            return filtered;
+        }
+
+        // Update filter options
+        function updateFilters() {
+            const symbolFilter = document.getElementById('symbolFilter');
+            const currentValue = symbolFilter.value;
+
+            // Get unique symbols
+            const symbols = [...new Set(transactionHistory.map(t => t.stockSymbol))].sort();
+
+            symbolFilter.innerHTML = '<option value="">全部</option>' +
+                symbols.map(symbol => `<option value="${symbol}" ${symbol === currentValue ? 'selected' : ''}>${symbol}</option>`).join('');
+        }
+
+        // Setup filter event listeners
+        function setupFilters() {
+            ['symbolFilter', 'typeFilter', 'startDate', 'endDate'].forEach(id => {
+                document.getElementById(id).addEventListener('change', updateTransactionsTable);
+            });
+        }
+
+        // Delete transaction
+        function deleteTransaction(id) {
+            if (confirm('确定要删除这条交易记录吗？\n注意：删除后无法恢复！')) {
+                transactionHistory = transactionHistory.filter(t => t.id !== id);
+                saveTransactionHistory();
+                updateDisplay();
+            }
+        }
+
+        // Make functions globally available
+        window.deleteTransaction = deleteTransaction;
+    </script>
+</body>
+</html>

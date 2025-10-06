@@ -1,0 +1,54 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "*.js",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/price/(.*)",
+      "dest": "/api/price.py"
+    },
+    {
+      "src": "/api/history/(.*)",
+      "dest": "/api/price.py"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/price.py"
+    },
+    {
+      "src": "/api/portfolio/save",
+      "dest": "/api/portfolio.py",
+      "methods": ["POST", "OPTIONS"]
+    },
+    {
+      "src": "/api/portfolio/load",
+      "dest": "/api/portfolio.py",
+      "methods": ["GET", "OPTIONS"]
+    },
+    {
+      "src": "/api/portfolio/delete",
+      "dest": "/api/portfolio.py",
+      "methods": ["DELETE", "OPTIONS"]
+    },
+    {
+      "src": "/transactions.html",
+      "dest": "/transactions.html"
+    },
+    {
+      "src": "/",
+      "dest": "/portfolio-tracker.html"
+    }
+  ]
+}
