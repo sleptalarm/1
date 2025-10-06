@@ -862,39 +862,51 @@
                     const stock = portfolio.find(s => s.symbol === transaction.stockSymbol);
                     const sellAmount = transaction.totalValue - (transaction.totalFee || 0);
 
-                    if (!stock) {
-                        // Need to find the original buy price from transaction history
-                        // Look for buy transactions for this stock before this sell
-                        const buyTransactions = transactionHistory.filter(t =>
-                            t.stockSymbol === transaction.stockSymbol &&
-                            t.type === 'buy' &&
-                            new Date(t.date) < new Date(transaction.date)
-                        );
+                    // Calculate what the position should be after removing this sell transaction
+                    // by replaying all transactions for this symbol (excluding the one being deleted)
+                    const allTransactions = transactionHistory.filter(t =>
+                        t.stockSymbol === transaction.stockSymbol &&
+                        t.id !== id  // Exclude the transaction being deleted
+                    ).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                        let avgBuyPrice = transaction.price; // Fallback to sell price
-                        if (buyTransactions.length > 0) {
-                            // Calculate weighted average buy price
-                            const totalShares = buyTransactions.reduce((sum, t) => sum + t.shares, 0);
-                            const totalCost = buyTransactions.reduce((sum, t) => sum + (t.shares * t.price + (t.totalFee || 0)), 0);
-                            avgBuyPrice = totalCost / totalShares;
+                    let calculatedShares = 0;
+                    let totalCost = 0;
+
+                    allTransactions.forEach(t => {
+                        if (t.type === 'buy') {
+                            totalCost += t.shares * t.price + (t.totalFee || 0);
+                            calculatedShares += t.shares;
+                        } else if (t.type === 'sell') {
+                            calculatedShares -= t.shares;
                         }
+                    });
 
-                        // Re-add stock to portfolio with correct buy price
-                        portfolio.push({
-                            id: Date.now(),
-                            symbol: transaction.stockSymbol,
-                            companyName: transaction.stockSymbol,
-                            shares: transaction.shares,
-                            buyPrice: avgBuyPrice,
-                            currentPrice: transaction.price,
-                            previousClose: transaction.price,
-                            buyDate: transaction.date.split('T')[0],
-                            lastUpdate: new Date().toISOString()
-                        });
+                    const avgBuyPrice = calculatedShares > 0 ? totalCost / calculatedShares : transaction.price;
+
+                    if (!stock) {
+                        // Stock was cleared, re-add it with calculated shares
+                        if (calculatedShares > 0) {
+                            portfolio.push({
+                                id: Date.now(),
+                                symbol: transaction.stockSymbol,
+                                companyName: transaction.stockSymbol,
+                                shares: calculatedShares,
+                                buyPrice: avgBuyPrice,
+                                currentPrice: transaction.price,
+                                previousClose: transaction.price,
+                                buyDate: transaction.date.split('T')[0],
+                                lastUpdate: new Date().toISOString()
+                            });
+                        }
                     } else {
-                        // Stock still exists, just increase shares
-                        // Keep the existing average cost
-                        stock.shares += transaction.shares;
+                        // Stock exists, update to calculated shares
+                        stock.shares = calculatedShares;
+                        if (calculatedShares > 0) {
+                            stock.buyPrice = avgBuyPrice;
+                        } else {
+                            // If no shares left, remove from portfolio
+                            portfolio = portfolio.filter(s => s.symbol !== transaction.stockSymbol);
+                        }
                     }
 
                     // Deduct cash
