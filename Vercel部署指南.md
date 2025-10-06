@@ -285,3 +285,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 ---
 
 **祝部署成功！📈**
+
+
+mongodb+srv://shaojinguo1_db_user:k2yrI5YgZJHXKW3h@portfolio-tracker.qec3y5l.mongodb.net/?retryWrites=true&w=majority&appName=portfolio-tracker

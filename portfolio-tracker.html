@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>股票投资组合追踪器</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- 配置和云端同步 -->
+    <script src="config.js"></script>
+    <script src="cloud-sync.js"></script>
     <style>
         * {
             margin: 0;
@@ -1232,25 +1235,42 @@
 
         // Initialize
         window.onload = async function() {
-            const saved = localStorage.getItem('portfolio');
-            if (saved) {
-                portfolio = JSON.parse(saved);
-                updateDisplay();
-                // Auto refresh prices on load
-                setTimeout(() => refreshAllPrices(), 1000);
+            // ===== 云端同步初始化 =====
+            await initCloudSync();
+            // ===== 云端同步初始化结束 =====
+
+            // 注意：initCloudSync()已经从云端加载数据到portfolio、cashBalance等变量
+            // 所以下面的本地加载代码只在云端没有数据时作为fallback
+
+            // 如果云端没有加载到数据，从本地加载
+            if (portfolio.length === 0) {
+                const saved = localStorage.getItem('portfolio');
+                if (saved) {
+                    portfolio = JSON.parse(saved);
+                }
             }
-            // Load cash balance
-            const savedCash = localStorage.getItem('cashBalance');
-            if (savedCash) {
-                cashBalance = parseFloat(savedCash);
+
+            if (cashBalance === 0) {
+                const savedCash = localStorage.getItem('cashBalance');
+                if (savedCash) {
+                    cashBalance = parseFloat(savedCash);
+                }
             }
-            await loadTransactionHistory(); // Load transaction history and realized profit
+
+            if (transactionHistory.length === 0) {
+                await loadTransactionHistory(); // Load transaction history and realized profit
+            }
 
             // Update cash display after loading
             updateCashDisplay();
 
             // Update all display data after loading
             updateDisplay();
+
+            // Auto refresh prices on load
+            if (portfolio.length > 0) {
+                setTimeout(() => refreshAllPrices(), 1000);
+            }
 
             // Set default date for cash transactions to today
             document.getElementById('cashDate').value = new Date().toISOString().split('T')[0];
@@ -1272,8 +1292,9 @@
             const apiStatus = document.getElementById('apiStatus');
 
             try {
-                // 检查本地Python API是否运行
-                const response = await fetch('http://localhost:5001/api/health');
+                // 检查API是否运行（使用配置的API地址）
+                const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : 'http://localhost:5001';
+                const response = await fetch(`${apiUrl}/api/health`);
                 if (response.ok) {
                     const data = await response.json();
                     apiStatus.textContent = 'API已连接 (本地Python服务)';
@@ -1703,11 +1724,12 @@
         // Fetch real 30-day historical data from local API
         window.fetchReal30DayHistory = async function(symbol) {
             console.log(`📈 获取 ${symbol} 真实30天历史数据...`);
-            showToast(`正在从本地API获取 ${symbol} 的真实历史数据...`, 'info');
+            showToast(`正在从API获取 ${symbol} 的真实历史数据...`, 'info');
 
             try {
-                console.log('🔄 尝试本地Python API...');
-                const url = `http://localhost:5001/api/history/${symbol}?period=1M`;
+                console.log('🔄 尝试Python API...');
+                const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : 'http://localhost:5001';
+                const url = `${apiUrl}/api/history/${symbol}?period=1M`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -1989,11 +2011,12 @@
         }
 
 
-        // 本地Python API (使用yfinance)
+        // Python API (使用yfinance)
         async function fetchFromLocalAPI(symbol) {
             try {
-                // 调用本地Python API服务
-                const url = `http://localhost:5001/api/price/${symbol}`;
+                // 调用Python API服务
+                const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : 'http://localhost:5001';
+                const url = `${apiUrl}/api/price/${symbol}`;
 
                 const response = await fetch(url);
                 if (!response.ok) {
@@ -3624,11 +3647,12 @@
             }
         }
 
-        // 使用本地API获取历史数据（按周期）
+        // 使用API获取历史数据（按周期）
         async function fetchHistoricalFromLocalAPIByPeriod(symbol, period = '1M') {
             try {
-                const url = `http://localhost:5001/api/history/${symbol}?period=${period}`;
-                console.log(`🔄 正在从本地API获取 ${symbol} 历史数据 (${period}): ${url}`);
+                const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : 'http://localhost:5001';
+                const url = `${apiUrl}/api/history/${symbol}?period=${period}`;
+                console.log(`🔄 正在从API获取 ${symbol} 历史数据 (${period}): ${url}`);
 
                 const response = await fetch(url, {
                     signal: AbortSignal.timeout(10000)
@@ -3674,8 +3698,9 @@
                 else if (days <= 180) period = '6M';
                 else period = 'YTD';
 
-                const url = `http://localhost:5001/api/history/${symbol}?period=${period}`;
-                console.log(`🔄 正在从本地API获取 ${symbol} 历史数据: ${url}`);
+                const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : 'http://localhost:5001';
+                const url = `${apiUrl}/api/history/${symbol}?period=${period}`;
+                console.log(`🔄 正在从API获取 ${symbol} 历史数据: ${url}`);
 
                 const response = await fetch(url, {
                     signal: AbortSignal.timeout(10000)
@@ -4651,10 +4676,11 @@
                 ctx.textAlign = 'center';
                 ctx.fillText('正在加载股价数据...', canvas.width / 2, canvas.height / 2);
 
-                // 使用本地API获取指定时间范围的历史数据
+                // 使用API获取指定时间范围的历史数据
                 let historicalData = null;
                 try {
-                    const response = await fetch(`http://localhost:5001/api/history/${stock.symbol}?period=${timeRange}`);
+                    const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : 'http://localhost:5001';
+                    const response = await fetch(`${apiUrl}/api/history/${stock.symbol}?period=${timeRange}`);
                     if (response.ok) {
                         const data = await response.json();
                         if (data.success && data.data && data.data.length > 0) {
@@ -4886,6 +4912,126 @@
             // Only show confirmation for external navigation or page close with data
             if (portfolio.length > 0) {
                 return '您的投资组合数据已保存在浏览器中。';
+            }
+        };
+
+        // ==================== 云端同步功能 ====================
+
+        let cloudSync = null;
+
+        async function initCloudSync() {
+            console.log('🔄 初始化云端同步...');
+
+            // 检查是否有CloudSync类可用
+            if (typeof CloudSync === 'undefined') {
+                console.warn('⚠️ CloudSync未加载，跳过云端同步');
+                return;
+            }
+
+            try {
+                // 初始化云端同步
+                const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : window.location.origin;
+                cloudSync = new CloudSync(apiUrl);
+
+                // 尝试从云端加载数据
+                const cloudAvailable = await cloudSync.checkCloudAvailability();
+
+                if (cloudAvailable) {
+                    console.log('✅ 云端服务可用');
+
+                    try {
+                        const cloudData = await cloudSync.loadFromCloud();
+
+                        if (cloudData && cloudData.positions) {
+                            console.log('✅ 从云端加载数据:', cloudData);
+
+                            // 使用云端数据
+                            portfolio = cloudData.positions || [];
+                            cashBalance = cloudData.cashBalance || 0;
+                            transactionHistory = cloudData.transactionHistory || [];
+                            totalRealizedProfit = cloudData.totalRealizedProfit || 0;
+
+                            // 同时保存到本地
+                            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                            localStorage.setItem('cashBalance', cashBalance.toString());
+                            localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory));
+                            localStorage.setItem('totalRealizedProfit', totalRealizedProfit.toString());
+
+                            showToast('✅ 已从云端同步数据', 'success');
+                        } else {
+                            console.log('云端暂无数据');
+                        }
+                    } catch (error) {
+                        console.error('云端加载失败:', error);
+                    }
+                } else {
+                    console.log('📴 云端服务不可用，使用本地数据');
+                }
+            } catch (error) {
+                console.error('云端同步初始化失败:', error);
+            }
+        }
+
+        async function syncToCloud() {
+            if (!cloudSync || !cloudSync.isEnabled()) {
+                return;
+            }
+
+            const portfolioData = {
+                positions: portfolio,
+                cashBalance: cashBalance,
+                transactionHistory: transactionHistory,
+                totalRealizedProfit: totalRealizedProfit,
+                lastModified: new Date().toISOString()
+            };
+
+            console.log('☁️ 正在同步到云端...', portfolioData);
+
+            try {
+                const success = await cloudSync.saveToCloud(portfolioData);
+
+                if (success) {
+                    console.log('✅ 已同步到云端');
+                } else {
+                    console.warn('⚠️ 云端同步失败');
+                }
+            } catch (error) {
+                console.error('云端同步错误:', error);
+            }
+        }
+
+        // 修改原有的保存函数，添加云端同步
+        const originalSavePortfolio = savePortfolio;
+        savePortfolio = function() {
+            // 保存到本地
+            localStorage.setItem('portfolio', JSON.stringify(portfolio));
+
+            // 同步到云端（异步，不阻塞）
+            if (cloudSync) {
+                syncToCloud().catch(err => console.error('云端同步失败:', err));
+            }
+        };
+
+        const originalSaveCashBalance = saveCashBalance;
+        saveCashBalance = function() {
+            localStorage.setItem('cashBalance', cashBalance.toString());
+
+            if (cloudSync) {
+                syncToCloud().catch(err => console.error('云端同步失败:', err));
+            }
+        };
+
+        const originalSaveTransactionHistory = saveTransactionHistory;
+        saveTransactionHistory = async function() {
+            localStorage.setItem('transactionHistory', JSON.stringify(transactionHistory));
+            localStorage.setItem('totalRealizedProfit', totalRealizedProfit.toString());
+
+            // 保存到IndexedDB
+            await saveToIndexedDB();
+
+            // 同步到云端
+            if (cloudSync) {
+                syncToCloud().catch(err => console.error('云端同步失败:', err));
             }
         };
     </script>
