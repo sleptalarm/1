@@ -23,12 +23,19 @@ class handler(BaseHTTPRequestHandler):
         else:
             mongodb_status = mongodb_uri
 
+        # 检查Vercel KV环境变量
+        kv_url = os.environ.get('KV_REST_API_URL', 'NOT_SET')
+        kv_token = os.environ.get('KV_REST_API_TOKEN', 'NOT_SET')
+
         debug_info = {
             'status': 'ok',
             'environment': {
                 'MONGODB_URI_SET': mongodb_uri != 'NOT_SET',
                 'MONGODB_URI_PREVIEW': mongodb_status,
-                'MONGODB_URI_LENGTH': len(mongodb_uri) if mongodb_uri != 'NOT_SET' else 0
+                'MONGODB_URI_LENGTH': len(mongodb_uri) if mongodb_uri != 'NOT_SET' else 0,
+                'KV_REST_API_URL_SET': kv_url != 'NOT_SET',
+                'KV_REST_API_TOKEN_SET': kv_token != 'NOT_SET',
+                'KV_URL_PREVIEW': kv_url[:50] + '...' if kv_url != 'NOT_SET' and len(kv_url) > 50 else kv_url
             },
             'vercel': {
                 'region': os.environ.get('VERCEL_REGION', 'unknown'),
