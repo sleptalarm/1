@@ -740,10 +740,155 @@
             });
         }
 
-        // Delete transaction
+        // Delete transaction with smart rollback
         async function deleteTransaction(id) {
-            if (confirm('确定要删除这条交易记录吗？\n注意：删除后无法恢复！')) {
+            // Find the transaction to delete
+            const transaction = transactionHistory.find(t => t.id === id);
+            if (!transaction) {
+                alert('❌ 找不到该交易记录');
+                return;
+            }
+
+            // Load current portfolio and cash balance from localStorage
+            let portfolio = JSON.parse(localStorage.getItem('portfolio') || '[]');
+            let cashBalance = parseFloat(localStorage.getItem('cashBalance') || '0');
+            let totalRealizedProfit = parseFloat(localStorage.getItem('totalRealizedProfit') || '0');
+
+            // Prepare rollback message
+            let rollbackMessage = '';
+            let canDelete = true;
+
+            if (transaction.type === 'buy') {
+                // Deleting a buy transaction
+                const stock = portfolio.find(s => s.symbol === transaction.stockSymbol);
+
+                if (!stock) {
+                    rollbackMessage = `将退回 $${(transaction.totalValue + (transaction.totalFee || 0)).toFixed(2)} 到现金账户`;
+                } else {
+                    // Check if deleting this buy would make shares negative
+                    const remainingShares = stock.shares - transaction.shares;
+
+                    if (remainingShares < 0) {
+                        alert(`❌ 无法删除此买入记录！\n\n原因：该股票在此交易后发生了卖出操作。\n删除此买入会导致持仓数量为负（${remainingShares}股）。\n\n建议：请先删除相关的卖出交易。`);
+                        return;
+                    }
+
+                    if (remainingShares === 0) {
+                        rollbackMessage = `将从投资组合中移除 ${transaction.stockSymbol}，并退回 $${(transaction.totalValue + (transaction.totalFee || 0)).toFixed(2)} 到现金账户`;
+                    } else {
+                        // Recalculate average cost
+                        const totalCost = stock.shares * stock.buyPrice;
+                        const removedCost = transaction.shares * transaction.price + (transaction.totalFee || 0);
+                        const newAvgCost = (totalCost - removedCost) / remainingShares;
+
+                        rollbackMessage = `将 ${transaction.stockSymbol} 持仓从 ${stock.shares} 股减少到 ${remainingShares} 股\n新的平均成本：$${newAvgCost.toFixed(2)}\n退回现金：$${(transaction.totalValue + (transaction.totalFee || 0)).toFixed(2)}`;
+                    }
+                }
+            } else if (transaction.type === 'sell') {
+                // Deleting a sell transaction
+                const stock = portfolio.find(s => s.symbol === transaction.stockSymbol);
+                const sellAmount = transaction.totalValue - (transaction.totalFee || 0);
+                const profit = transaction.realizedProfit || 0;
+
+                if (!stock) {
+                    rollbackMessage = `将重新添加 ${transaction.stockSymbol} ${transaction.shares} 股到投资组合\n扣除现金：$${sellAmount.toFixed(2)}\n撤销已实现盈亏：$${profit.toFixed(2)}`;
+                } else {
+                    rollbackMessage = `将 ${transaction.stockSymbol} 持仓从 ${stock.shares} 股增加到 ${stock.shares + transaction.shares} 股\n扣除现金：$${sellAmount.toFixed(2)}\n撤销已实现盈亏：$${profit.toFixed(2)}`;
+                }
+
+                // Check if there's enough cash to rollback
+                if (cashBalance < sellAmount) {
+                    alert(`❌ 无法删除此卖出记录！\n\n原因：现金余额不足以回滚此交易。\n需要：$${sellAmount.toFixed(2)}\n当前余额：$${cashBalance.toFixed(2)}\n\n建议：请先转入足够的资金。`);
+                    return;
+                }
+            } else if (transaction.type === 'cash_deposit') {
+                // Deleting a deposit
+                const depositAmount = transaction.amount;
+
+                if (cashBalance < depositAmount) {
+                    alert(`❌ 无法删除此转入记录！\n\n原因：现金余额不足。\n转入金额：$${depositAmount.toFixed(2)}\n当前余额：$${cashBalance.toFixed(2)}\n\n删除此记录会导致现金余额为负。`);
+                    return;
+                }
+
+                rollbackMessage = `将扣除现金 $${depositAmount.toFixed(2)}`;
+            } else if (transaction.type === 'cash_withdrawal') {
+                // Deleting a withdrawal
+                const withdrawalAmount = Math.abs(transaction.amount);
+                rollbackMessage = `将退回现金 $${withdrawalAmount.toFixed(2)}`;
+            }
+
+            // Confirm deletion
+            const confirmed = confirm(`确定要删除这条交易记录吗？\n\n${rollbackMessage}\n\n注意：此操作将同步到所有设备！`);
+
+            if (!confirmed) return;
+
+            // Perform rollback
+            try {
+                if (transaction.type === 'buy') {
+                    const stock = portfolio.find(s => s.symbol === transaction.stockSymbol);
+
+                    if (stock) {
+                        const remainingShares = stock.shares - transaction.shares;
+
+                        if (remainingShares === 0) {
+                            // Remove stock from portfolio
+                            portfolio = portfolio.filter(s => s.symbol !== transaction.stockSymbol);
+                        } else {
+                            // Update shares and average cost
+                            const totalCost = stock.shares * stock.buyPrice;
+                            const removedCost = transaction.shares * transaction.price + (transaction.totalFee || 0);
+                            stock.shares = remainingShares;
+                            stock.buyPrice = (totalCost - removedCost) / remainingShares;
+                        }
+                    }
+
+                    // Return cash
+                    cashBalance += transaction.totalValue + (transaction.totalFee || 0);
+
+                } else if (transaction.type === 'sell') {
+                    const stock = portfolio.find(s => s.symbol === transaction.stockSymbol);
+                    const sellAmount = transaction.totalValue - (transaction.totalFee || 0);
+
+                    if (!stock) {
+                        // Re-add stock to portfolio
+                        portfolio.push({
+                            id: Date.now(),
+                            symbol: transaction.stockSymbol,
+                            companyName: transaction.stockSymbol,
+                            shares: transaction.shares,
+                            buyPrice: transaction.price,
+                            currentPrice: transaction.price,
+                            previousClose: transaction.price,
+                            buyDate: transaction.date.split('T')[0],
+                            lastUpdate: new Date().toISOString()
+                        });
+                    } else {
+                        // Increase shares
+                        const totalShares = stock.shares + transaction.shares;
+                        const totalCost = stock.shares * stock.buyPrice + transaction.shares * transaction.price;
+                        stock.shares = totalShares;
+                        stock.buyPrice = totalCost / totalShares;
+                    }
+
+                    // Deduct cash
+                    cashBalance -= sellAmount;
+
+                    // Reverse realized profit
+                    totalRealizedProfit -= (transaction.realizedProfit || 0);
+
+                } else if (transaction.type === 'cash_deposit') {
+                    cashBalance -= transaction.amount;
+                } else if (transaction.type === 'cash_withdrawal') {
+                    cashBalance += Math.abs(transaction.amount);
+                }
+
+                // Remove transaction from history
                 transactionHistory = transactionHistory.filter(t => t.id !== id);
+
+                // Save everything
+                localStorage.setItem('portfolio', JSON.stringify(portfolio));
+                localStorage.setItem('cashBalance', cashBalance.toString());
+                localStorage.setItem('totalRealizedProfit', totalRealizedProfit.toString());
                 saveTransactionHistory();
 
                 // Sync to cloud
@@ -757,7 +902,16 @@
                 }
 
                 updateDisplay();
-                alert('✅ 交易记录已删除！');
+                alert('✅ 交易记录已删除并回滚！');
+
+                // Reload page to reflect changes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+
+            } catch (error) {
+                console.error('删除交易失败:', error);
+                alert('❌ 删除失败：' + error.message);
             }
         }
 

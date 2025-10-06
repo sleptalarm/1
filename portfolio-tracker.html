@@ -1414,13 +1414,9 @@
 
         // Reset all data function
         async function resetAllData() {
-            const confirmed = confirm('⚠️ 警告：此操作将删除所有数据！\n\n包括：\n- 所有持仓记录\n- 所有交易历史\n- 现金余额\n- 本地和云端数据\n\n此操作无法撤销！确定要继续吗？');
+            const confirmed = confirm('⚠️ 警告：此操作将永久删除所有数据！\n\n包括：\n• 所有持仓记录\n• 所有交易历史\n• 现金余额\n• 本地和云端数据\n\n此操作无法撤销！确定要继续吗？');
 
             if (!confirmed) return;
-
-            const doubleCheck = confirm('🔴 最后确认：真的要删除所有数据吗？');
-
-            if (!doubleCheck) return;
 
             try {
                 // Clear all local data
