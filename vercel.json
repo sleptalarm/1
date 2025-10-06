@@ -20,6 +20,10 @@
       "dest": "/api/debug.py"
     },
     {
+      "src": "/api/test_redis",
+      "dest": "/api/test_redis.py"
+    },
+    {
       "src": "/api/price/(.*)",
       "dest": "/api/price.py"
     },
