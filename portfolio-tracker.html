@@ -2594,7 +2594,7 @@
                     portfolio.push(stock);
                 }
 
-                // Record initial buy transaction
+                // Record buy transaction
                 const transaction = {
                     id: Date.now() + 1, // Slightly different ID to avoid collision
                     stockSymbol: symbol,
@@ -2606,7 +2606,7 @@
                     totalValue: buyPrice * shares,
                     realizedProfit: 0,
                     date: buyDate + 'T12:00:00.000Z',
-                    note: '初始买入'
+                    note: existingStock ? '加仓' : '初始买入'  // Check if it's additional purchase
                 };
 
                 transactionHistory.push(transaction);
@@ -3330,7 +3330,7 @@
             // Fetch historical price data for all symbols
             const historicalPriceData = new Map();
 
-            showToast('正在获取历史价格数据...', 'success');
+            // showToast('正在获取历史价格数据...', 'success');
 
             for (const symbol of allSymbols) {
                 try {
@@ -4199,7 +4199,7 @@
             if (!portfolioTrendChart) return;
 
             try {
-                showToast('正在计算投资组合历史价值...', 'success');
+                // showToast('正在计算投资组合历史价值...', 'success');
 
                 // Get raw daily data
                 const rawData = await calculateHistoricalPortfolioValues();
