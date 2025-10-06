@@ -996,6 +996,7 @@
                 <div class="button-group">
                     <button onclick="depositCash()">💵 转入资金</button>
                     <button onclick="withdrawCash()">💸 转出资金</button>
+                    <button onclick="resetAllData()" style="background: #dc2626; margin-left: 20px;">🔄 重置所有数据</button>
                 </div>
                 <div style="margin-top: 20px; color: white; font-size: 0.9em;">
                     <p>💡 当前现金余额: $<span id="currentCashDisplay">0.00</span></p>
@@ -1407,6 +1408,64 @@
             amountInput.value = '';
             dateInput.value = '';
             showToast(`成功转出 $${amount.toFixed(2)}`, 'success');
+        }
+
+        // Reset all data function
+        async function resetAllData() {
+            const confirmed = confirm('⚠️ 警告：此操作将删除所有数据！\n\n包括：\n- 所有持仓记录\n- 所有交易历史\n- 现金余额\n- 本地和云端数据\n\n此操作无法撤销！确定要继续吗？');
+
+            if (!confirmed) return;
+
+            const doubleCheck = confirm('🔴 最后确认：真的要删除所有数据吗？');
+
+            if (!doubleCheck) return;
+
+            try {
+                // Clear all local data
+                portfolio = [];
+                transactionHistory = [];
+                totalRealizedProfit = 0;
+                cashBalance = 100000; // Reset to default
+
+                // Clear localStorage
+                localStorage.clear();
+
+                // Clear IndexedDB
+                try {
+                    indexedDB.deleteDatabase('PortfolioTrackerDB');
+                } catch (e) {
+                    console.warn('IndexedDB清除失败:', e);
+                }
+
+                // Clear cloud data
+                if (typeof cloudSync !== 'undefined' && cloudSync) {
+                    try {
+                        await cloudSync.deleteFromCloud();
+                        console.log('✅ 云端数据已删除');
+                    } catch (e) {
+                        console.warn('云端数据删除失败:', e);
+                    }
+                }
+
+                // Save empty data
+                savePortfolio();
+                saveCashBalance();
+                saveTransactionHistory();
+
+                // Update display
+                updateDisplay();
+
+                showToast('✅ 所有数据已重置！', 'success');
+
+                // Reload page after 1 second
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+
+            } catch (error) {
+                console.error('重置数据失败:', error);
+                showToast('❌ 重置失败：' + error.message, 'error');
+            }
         }
 
         function saveTransactionHistory() {

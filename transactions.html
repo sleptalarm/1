@@ -289,6 +289,8 @@
             }
         }
     </style>
+    <script src="config.js"></script>
+    <script src="cloud-sync.js"></script>
 </head>
 <body>
     <div class="container">
@@ -392,9 +394,42 @@
         // Global variables
         let transactionHistory = [];
         let filteredTransactions = [];
+        let cloudSync = null;
+
+        // Initialize cloud sync
+        async function initCloudSync() {
+            if (typeof CloudSync !== 'undefined') {
+                const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : window.location.origin;
+                cloudSync = new CloudSync(apiUrl);
+                console.log('✅ 云端同步已初始化 (transactions)');
+            }
+        }
+
+        // Sync to cloud
+        async function syncToCloud() {
+            if (!cloudSync) {
+                console.warn('云端同步未初始化');
+                return;
+            }
+
+            const portfolioData = {
+                portfolio: JSON.parse(localStorage.getItem('portfolio') || '[]'),
+                cashBalance: parseFloat(localStorage.getItem('cashBalance') || '100000'),
+                transactionHistory: transactionHistory,
+                totalRealizedProfit: transactionHistory
+                    .filter(t => t.type === 'sell')
+                    .reduce((sum, t) => sum + (t.realizedProfit || 0), 0),
+                lastModified: new Date().toISOString()
+            };
+
+            console.log('☁️ 正在同步交易记录到云端...', portfolioData);
+            await cloudSync.saveToCloud(portfolioData);
+            console.log('✅ 交易记录已同步到云端');
+        }
 
         // Load data on page load
         window.onload = async function() {
+            await initCloudSync();
             await loadTransactionHistory();
             updateDisplay();
             setupFilters();
@@ -706,11 +741,23 @@
         }
 
         // Delete transaction
-        function deleteTransaction(id) {
+        async function deleteTransaction(id) {
             if (confirm('确定要删除这条交易记录吗？\n注意：删除后无法恢复！')) {
                 transactionHistory = transactionHistory.filter(t => t.id !== id);
                 saveTransactionHistory();
+
+                // Sync to cloud
+                if (typeof syncToCloud === 'function') {
+                    try {
+                        await syncToCloud();
+                        console.log('✅ 交易删除已同步到云端');
+                    } catch (err) {
+                        console.error('云端同步失败:', err);
+                    }
+                }
+
                 updateDisplay();
+                alert('✅ 交易记录已删除！');
             }
         }
 
